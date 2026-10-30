@@ -1,0 +1,19 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+# pycharm generated files
+.idea
+
+# igmore .env file
+.env
+
+# ignore test db folder
+test_db
+test/test_db

@@ -9,7 +9,7 @@ A small trade-store service implementing version-aware upserts, maturity-date va
 + Expired is managed by the cron job.
 # Project Structure
 
-![img.png](img.png)
+![package_structure.png](docs/package_structure.png)
 
 # Prerequisite
 + Python 3.14
@@ -64,7 +64,7 @@ curl -X 'POST' \
 
 # High Level Design
 
-![img_4.png](img_4.png)
+![hld_1.png](docs/hld_1.png)
 
 
 

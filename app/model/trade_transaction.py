@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field, model_validator
 from datetime import date, datetime
-from typing import Optional
+
+from pydantic import BaseModel, Field, model_validator
+
 
 def initialize_expired(maturity_date: str):
     today = date.today()
@@ -16,10 +17,10 @@ class TradeTransaction(BaseModel):
     counter_party_id: str = None
     portfolio_id: str =  None
     maturity_date: str = None
-    created_date: Optional[date] = Field(
+    created_date: date | None = Field(
         default_factory=lambda: datetime.now().strftime("%d/%m/%Y")
     )
-    expired: Optional[str] = None
+    expired: str | None = None
 
     @model_validator(mode="after")
     def set_expired(self):

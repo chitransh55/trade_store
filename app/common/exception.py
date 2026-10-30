@@ -9,8 +9,8 @@ class LowerVersionError(TradeStoreError):
 class TradeNotFoundError(TradeStoreError):
     """Raised when a requested trade does not exist."""
 
-class DateFormatError(TradeStoreError):
-    """Raised when an incoming trade has wrong date format."""
+class DatabaseServiceError(TradeStoreError):
+    """Raised when an error is in DBService operations."""
 
 class InvalidMaturityDateError(TradeStoreError):
     """Raised when a new or updated trade is already past maturity."""

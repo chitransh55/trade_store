@@ -1,7 +1,9 @@
 import sqlite3
+
+from app.common.exception import DatabaseServiceError
 from app.model.trade_transaction import TradeTransaction
 
-TRADE_TABLE_SCHEMA = f"""
+TRADE_TABLE_SCHEMA = """
 CREATE TABLE IF NOT EXISTS trader_trans (
     trade_id         TEXT    NOT NULL,
     version          INTEGER NOT NULL,
@@ -50,7 +52,7 @@ class DBService:
     def save(self, transaction_data: TradeTransaction):
         try:
             with self._connect() as conn:
-                cursor = conn.execute(f"""
+                cursor = conn.execute("""
                     INSERT INTO trader_trans (trade_id, version, counter_party_id, portfolio_id, maturity_date, created_date, expired)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(trade_id, version) DO UPDATE SET
@@ -72,13 +74,10 @@ class DBService:
                 data = cursor.lastrowid
                 return data
         except sqlite3.IntegrityError as e:
-            print(f"Constraint violation: {e}")
-            raise e
+            raise DatabaseServiceError(f"Database operation failed: {e}") from e
 
         except sqlite3.OperationalError as e:
-            print(f"Database operation failed: {e}")
-            raise e
+            raise DatabaseServiceError(f"Database operation failed: {e}") from e
 
         except sqlite3.Error as e:
-            print(f"SQLite error: {e}")
-            raise e
+            raise DatabaseServiceError(f"Database operation failed: {e}") from e

@@ -1,8 +1,10 @@
-import pytest
 from pathlib import Path
-from app.service.trade import Trade
-from app.model.trade_transaction import TradeTransaction
+
+import pytest
+
 from app.common.exception import LowerVersionError
+from app.model.trade_transaction import TradeTransaction
+from app.service.trade import Trade
 
 
 @pytest.fixture(scope="session")

@@ -1,7 +1,8 @@
 
-from app.model.trade_transaction import TradeTransaction
+from app.common.exception import InvalidMaturityDateError, LowerVersionError
 from app.database.db_service import DBService
-from app.common.exception import LowerVersionError, InvalidMaturityDateError
+from app.model.trade_transaction import TradeTransaction
+
 
 class Trade:
 
@@ -9,7 +10,7 @@ class Trade:
         self.database = DBService(database_path,table_name, timeout)
 
     """
-    If higher version already saved then thorough HigherVersion exception and discard the transaction.
+    If higher version already saved then throw HigherVersion exception and discard the transaction.
     If trade_id and version already saved then update records.
     """
 
@@ -25,9 +26,8 @@ class Trade:
             raise InvalidMaturityDateError("Record maturity date already expired")
 
         result = self._get_latest_version(trade_transaction.trade_id)
-        if result is not None:
-            if trade_transaction.version < result[0][0]:
-                raise LowerVersionError(f"Record already persist with higher version of transaction so will"
+        if result is not None and trade_transaction.version < result[0][0]:
+            raise LowerVersionError(f"Record already persist with higher version of transaction so will"
                                         f" discard {trade_transaction.trade_id} with version {trade_transaction.version} record.")
 
         return (self.database.save(trade_transaction))

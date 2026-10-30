@@ -1,0 +1,96 @@
+name: Trade Store CI-CD Pipeline
+
+on:
+  push:
+    branches:
+      - develop_trade_store
+      - main
+
+  pull_request:
+    branches:
+      - develop_trade_store
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+
+  build-and-test:
+
+    name: Build and Test Trade Store
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # Step 1: Checkout source code
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Setup Python
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      # Step 3: Install UV
+      - name: Install UV
+        run: pip install uv
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: uv sync --locked --all-groups
+
+      # Step 5: Execute unit and regression tests
+      - name: Run Pytest
+        run: uv run pytest -v
+
+      # Step 6: Code quality check
+      - name: Run Ruff
+        run: uv run ruff check .
+
+      # Step 7: Dependency vulnerability scan
+      - name: Security Scan
+        run: uv run pip-audit
+
+      # Step 8: Build Docker image
+      - name: Build Docker Image
+        run: |
+          docker build \
+            -t trade-store-api:${{ github.sha }} .
+
+  publish-docker:
+
+    name: Publish Docker Image
+
+    needs: build-and-test
+
+    if: github.event_name == 'push'
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:latest

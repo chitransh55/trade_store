@@ -1,12 +1,13 @@
 import os
-from dotenv import load_dotenv
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Load variables from .env file
 load_dotenv()
 
 class Config:
-    DB_TIMEOUT = int(os.getenv("DB_TIMEOUT", 10))
+    DB_TIMEOUT = int(os.getenv("DB_TIMEOUT", "10"))
     DATABASE_PATH = Path(
         os.getenv("DB_PATH", "default")
     ).resolve()

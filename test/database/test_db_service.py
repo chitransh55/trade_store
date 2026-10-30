@@ -1,7 +1,10 @@
-import pytest
-from app.database.db_service import DBService
 from pathlib import Path
+
+import pytest
+
+from app.database.db_service import DBService
 from app.model.trade_transaction import TradeTransaction
+
 
 @pytest.fixture(scope="session")
 def database():

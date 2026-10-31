@@ -66,5 +66,7 @@ curl -X 'POST' \
 
 ![hld_1.png](docs/hld_1.png)
 
+# Sequence Diagram
 
+![ts_sequence_diagram.png](docs/ts_sequence_diagram.png)
 

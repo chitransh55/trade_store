@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import date
 
 from app.common.exception import DatabaseServiceError
 from app.model.trade_transaction import TradeTransaction
@@ -81,3 +82,49 @@ class DBService:
 
         except sqlite3.Error as e:
             raise DatabaseServiceError(f"Database operation failed: {e}") from e
+
+    def search(self, trade_id: str, version: int):
+        with self._connect() as conn:
+            conn.row_factory = sqlite3.Row
+            if version is not None:
+                cursor = conn.execute("""Select *
+                                         FROM trader_trans
+                                         WHERE trade_id = ?
+                                           AND version = ?""", (trade_id, version))
+            else:
+                cursor = conn.execute("""Select *
+                                         FROM trader_trans
+                                         WHERE trade_id = ?""", (trade_id,))
+            rows = cursor.fetchall()
+            return [dict(row) for row in rows]
+
+    def _get_expired_records(self):
+        today = date.today().strftime("%Y-%m-%d")
+        expired_data_query = """
+                    SELECT *
+                    FROM trader_trans
+                    WHERE DATE(
+                                SUBSTR(maturity_date, 7, 4) || '-' ||
+                                SUBSTR(maturity_date, 4, 2) || '-' ||
+                                SUBSTR(maturity_date, 1, 2)
+                    ) < ?
+        """
+
+        with self._connect() as conn:
+            cursor = conn.execute(expired_data_query, (today,))
+            rows = cursor.fetchall()
+            return [dict(row) for row in rows]
+
+    def run_expired(self, updated_value):
+        expired_data = self._get_expired_records()
+        if expired_data is not None and len(expired_data) >= 1:
+            update_expired_flag_query = """
+            UPDATE trader_trans
+            SET expired = ?
+            where trade_id = ? and version = ?
+            """
+            with self._connect() as conn:
+                for tran in expired_data:
+                    conn.execute(update_expired_flag_query, (updated_value, tran.get('trade_id'), tran.get('version')))
+                    conn.commit()
+

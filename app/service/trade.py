@@ -1,6 +1,7 @@
 
 from app.common.exception import InvalidMaturityDateError, LowerVersionError
 from app.database.db_service import DBService
+from app.model.trade_search import TradeSearch
 from app.model.trade_transaction import TradeTransaction
 
 
@@ -37,6 +38,20 @@ class Trade:
     def mark_expiry(self, query: str):
         pass
 
+    """
+    Query data from database. As of now It's support query on trade_id and version.
+    Parameters: 
+        query = {
+            "trade_id": "<trade_id>",
+            "version": "<version>",
+        }
+    trade_id is mandatory
+    Return : Rows (List of Tuples).
+    """
+    def qsearch(self, trade_search: TradeSearch):
+        return self.database.search(trade_search.trade_id, trade_search.version)
 
-    def get_trans_data(self, query: str):
-        pass
+    def run_expired_query(self, updated_value: str):
+        self.database.run_expired(updated_value)
+        return "job has successfully updated the expiry."
+

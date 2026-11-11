@@ -7,6 +7,15 @@ from app.model.trade_transaction import TradeTransaction
 from app.service.trade import Trade
 
 
+@pytest.fixture(scope="session", autouse=True)
+def clean_test_database():
+    db_path = Path("./test_db/default.db")
+
+    if db_path.exists():
+        db_path.unlink()
+
+    yield
+
 @pytest.fixture(scope="session")
 def trade():
     TEST_DATABASE_PATH = Path("./test_db/default.db").resolve()

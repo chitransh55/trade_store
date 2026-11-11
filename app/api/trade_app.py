@@ -8,6 +8,7 @@ from app.common.exception import (
     MissingValueError,
     TradeStoreError,
 )
+from app.model.trade_search import TradeSearch
 from app.model.trade_transaction import TradeTransaction
 from app.service.trade import Trade
 
@@ -78,6 +79,20 @@ async def trade(data: TradeTransaction):
     except LowerVersionError as ex:
         return exception_builder_msg(ex)
 
-@app.get("/")
-def home():
-    return {"message": "Trade Store API is running"}
+@app.post("/api/search", status_code=status.HTTP_201_CREATED)
+async def get_data(input: TradeSearch):
+    if input.trade_id is None or input.trade_id == "":
+        raise MissingValueError("trade_id has not defined in the request, Kindly provide trade_id.")
+    try:
+        output = service.qsearch(input)
+        return output
+    except TradeStoreError as e:
+        return exception_builder_msg(e)
+
+@app.post("/api/run_expiry", status_code=status.HTTP_201_CREATED)
+async def run_expiry():
+    output = service.run_expired_query("Y")
+    return {
+        "status": output
+    }
+

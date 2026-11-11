@@ -1,15 +1,24 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from app.api.trade_app import app
+from app.common.config import Config
+from app.database.db_service import DBService
 
 client = TestClient(app)
+dbservice = DBService(db_path=Config.DATABASE_PATH,
+                          trader_table_name=Config.TABLE_NAME,
+                          db_timeout=Config.DB_TIMEOUT)
 
-
-
-def test_endpoint():
-    response = client.get("/")
-    assert response.status_code == 200
-
+@pytest.fixture(scope="session",autouse=True)
+def cleanup_database():
+    yield
+    conn = dbservice._connect()
+    try:
+        conn.execute("DROP TABLE trader_trans;")
+        conn.commit()
+    finally:
+        conn.close()
 
 def test_missing_trade_id():
     data = {
@@ -123,3 +132,50 @@ def test_data_intigration_lower_version():
     response = client.post("/api/trade", json=lower_v_data)
     expected_output = "Record already persist with higher version of transaction so will discard IL4 with version 2 record."
     assert response.json()["message"] == expected_output
+
+def test_search():
+    data = {
+        "trade_id": "IL4",
+        "version": 4,
+    }
+    response = client.post("/api/search", json=data)
+    output = response.json()
+    assert output[0].get("version") == 4
+    assert output[0].get("trade_id") == "IL4"
+    assert output[0].get("counter_party_id") == "XBC Bank"
+
+def test_search_without_version():
+    data = {
+        "trade_id": "IL4"
+    }
+    response = client.post("/api/search", json=data)
+    output = response.json()
+    assert output[0].get("version") == 4
+    assert output[0].get("trade_id") == "IL4"
+    assert output[0].get("counter_party_id") == "XBC Bank"
+
+def test_search_without_trade_id():
+    data = {
+        "trade_id": ""
+    }
+    response = client.post("/api/search", json=data)
+    expected_output = "trade_id has not defined in the request, Kindly provide trade_id."
+    assert response.json()["message"] == expected_output
+
+def test_expiry_job():
+    data = {
+        "trade_id": "EXP1",
+        "version": 1,
+        "counter_party_id": "XBC Bank",
+        "portfolio_id": "EX11",
+        "maturity_date": "27/12/2027",
+    }
+    client.post("/api/trade", json=data)
+    conn = dbservice._connect()
+    try:
+        conn.execute(""" UPDATE trader_trans SET maturity_date = '27/02/2026' WHERE trade_id = 'EXP1'""")
+        conn.commit()
+    finally:
+        conn.close()
+    response = client.post("/api/run_expiry")
+    assert response.json()["status"] == "job has successfully updated the expiry."

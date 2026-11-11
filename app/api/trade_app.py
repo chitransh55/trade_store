@@ -96,3 +96,8 @@ async def run_expiry():
         "status": output
     }
 
+@app.get("/")
+async def home():
+    return {
+        "message": "Trade Store API is running"
+    }

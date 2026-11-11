@@ -5,16 +5,20 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api.trade_app import app
+from app.common.config import Config
+from app.database.db_service import DBService
+
 
 client = TestClient(app)
+dbservice = DBService(db_path=Config.DATABASE_PATH,
+                          trader_table_name=Config.TABLE_NAME,
+                          db_timeout=Config.DB_TIMEOUT)
 
 @pytest.fixture(scope="session",autouse=True)
 def cleanup_database():
     yield
     PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-    DB_PATH = PROJECT_ROOT / "data" / "dws.db"
-    path = Path(DB_PATH)
-    conn = sqlite3.connect(str(path))
+    conn = dbservice._connect()
     try:
         conn.execute("DROP TABLE trader_trans;")
         conn.commit()
@@ -172,10 +176,7 @@ def test_expiry_job():
         "maturity_date": "27/12/2027",
     }
     client.post("/api/trade", json=data)
-    PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-    DB_PATH = PROJECT_ROOT / "data" / "dws.db"
-    path = Path(DB_PATH)
-    conn = sqlite3.connect(str(path))
+    conn = dbservice._connect()
     try:
         conn.execute(""" UPDATE trader_trans SET maturity_date = '27/02/2026' WHERE trade_id = 'EXP1'""")
         conn.commit()

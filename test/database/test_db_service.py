@@ -109,4 +109,3 @@ def test_expiry_run(database):
     assert output[0].get("version") == 1
     assert output[0].get("trade_id") == "EXQ1"
     assert output[0].get("expired") == "N"
-

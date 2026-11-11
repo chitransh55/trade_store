@@ -85,4 +85,3 @@ def test_lower_version_insertion(trade):
         trade.save_trade(older_version_data)
 
     assert str(err.value) == expected_output
-

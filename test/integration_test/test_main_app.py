@@ -1,6 +1,3 @@
-import sqlite3
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -16,7 +13,6 @@ dbservice = DBService(db_path=Config.DATABASE_PATH,
 @pytest.fixture(scope="session",autouse=True)
 def cleanup_database():
     yield
-    PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
     conn = dbservice._connect()
     try:
         conn.execute("DROP TABLE trader_trans;")
